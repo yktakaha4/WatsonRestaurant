@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
@@ -64,9 +63,10 @@ public class APIClient {
         new UsernamePasswordCredentials(USERNAME, PASSWORD));
 
     SSLContext sslContext = SSLContext.getInstance("SSL");
-    sslContext.init(null,
-        new X509TrustManager[] { new LooseTrustManager() },
-        new SecureRandom());
+    sslContext.init(null, null, new SecureRandom());
+    //    sslContext.init(null,
+    //        new X509TrustManager[] { new LooseTrustManager() },
+    //        new SecureRandom());
 
     HttpClient httpClient = HttpClientBuilder.create()
         .setMaxConnTotal(128)
