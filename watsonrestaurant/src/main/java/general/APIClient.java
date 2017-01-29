@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 
@@ -62,19 +60,12 @@ public class APIClient {
     credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()),
         new UsernamePasswordCredentials(USERNAME, PASSWORD));
 
-    SSLContext sslContext = SSLContext.getInstance("SSL");
-    sslContext.init(null, null, new SecureRandom());
-    //    sslContext.init(null,
-    //        new X509TrustManager[] { new LooseTrustManager() },
-    //        new SecureRandom());
-
     HttpClient httpClient = HttpClientBuilder.create()
         .setMaxConnTotal(128)
         .setMaxConnPerRoute(32)
         .setDefaultRequestConfig(RequestConfig.copy(RequestConfig.DEFAULT).setRedirectsEnabled(true).build())
         .setDefaultCredentialsProvider(credentialsProvider)
         .addInterceptorFirst(new PreemptiveAuthInterceptor())
-        .setSslcontext(sslContext)
         .build();
 
     HttpSolrClient httpSolrClient = new HttpSolrClient.Builder()
