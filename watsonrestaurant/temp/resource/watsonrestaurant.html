@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <title>Watson Restaurant</title>
+    
+    <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/autosize.js/3.0.20/autosize.min.js"></script>
+    <script src="//maps.googleapis.com/maps/api/js?key="></script>
+    
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/earlyaccess/notosansjapanese.css" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Coming+Soon" rel="stylesheet">
+    
+    <style type="text/css">
+      body {
+        font-family: 'Noto Sans Japanese', serif;
+        margin: auto;
+      }
+      .title {
+        font-family: 'Coming Soon', cursive;
+      }
+      
+      .header {
+        background-color: rgba(100%,100%,100%,0.9);        
+      }
+      .header .search-word-area {
+        padding-right: 0;
+      }
+      .header .voice-button-area {
+        padding-right: 0;
+      }
+      
+      .jumbotron {
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+      }
+      .fa {
+        font-size: 20px;
+        margin: 0;
+      }
+      .form-group {
+        margin: 0;
+      }
+      
+      .textArea {
+        resize: none;
+      }
+      .title-margin {
+        height: 5em;
+      }
+      .listMode .header {
+        position: fixed;
+        width: 100%;
+        padding: 0 15px;
+        z-index: 10;
+      }
+      .listMode .results-margin .visible-xs {
+        height: 10.5em;
+      }
+      .listMode .results-margin .hidden-xs {
+        height: 12.5em;
+      }
+      
+      .lights {
+        margin: 0.5em;
+      }
+      .provided {
+        position: absolute;
+      }
+
+      .restaurant * {
+        color: white;
+      }
+      .restaurant .panel {
+        border: 0;
+      }
+      .restaurant-bg {
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;        
+      }
+      .restaurant .panel-heading, .restaurant .panel-footer, .restaurant .panel-body {
+        border: 0;
+        background-color: rgba(0%,0%,0%,0.25);
+      }
+      .restaurant .panel-title {
+        height: 2em;
+      }
+      .restaurant .panel-body {
+        height: 8em;
+        overflow-y: scroll;
+      }
+      .restaurant .star-icons {
+        margin-top: 1em;
+        margin-bottom: 0;
+      }
+      .restaurant .star-icons * {
+        color: gold;
+        font-size: 2em;
+      }
+      
+      .restaurant .panel-footer span {
+        margin-left: 0.5em;
+      }
+      .detail-icons {
+        text-align: center;
+      }
+      .comment-icons {
+        text-align: right;
+      }
+      .detail-icons i, .comment-icons i {
+        font-size: 3em;
+        width: 1.25em;
+      }
+      
+      .pinButton * {
+        opacity: 0.5;
+      }
+      .pinning .pinButton * {
+        opacity: 1;
+      }
+      
+      #comment-modal .modal-dialog, #alertModal .modal-dialog {
+        padding-top: 11em;
+      }
+      #map-modal .modal-body {
+        height: 500px;
+      }
+      .modal-header, .modal-footer {
+        border: 0;
+      }
+      .modal-alert-color .modal-backdrop {
+        background-color: transparent;
+      }
+      
+      #map-canvas {
+        height: 100%;
+      }
+      .map-icon {
+        position: absolute;
+        right: 0.25em;
+        top: 0.25em;
+      }
+      .map-icon i {
+        font-size: 2em;
+      }
+      
+      .blink {
+        color: orangered !important;
+        animation: blink 0.75s infinite alternate;
+      }
+      @keyframes blink {
+        from { opacity: 1.0; }
+        to { opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row title-margin">
+        <div class="col-xs-12"></div>
+      </div>
+      <div class="row">
+      </div>
+      <form class="form-horizontal header">
+        <div class="form-group text-center">
+          <div class="col-xs-12 jumbotron text-center">
+            <h1 class="title">WatsonRestaurant</h1>
+          </div>
+          <div class="col-xs-3 hidden-xs"></div>
+          <div class="col-xs-10 col-sm-6 search-word-area">
+            <textarea class="form-control textArea" placeholder="唐揚げ定食が食べたい" rows="1" cols="70"></textarea>
+          </div>
+          <div class="col-xs-2 voiceButtonArea text-left voice-button-area">
+            <button class="btn btn-link voiceButton">
+              <i class="fa fa-microphone-slash" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="col-xs-12 lights">
+            <a href="https://www.gnavi.co.jp/" target="_blank"> 
+              <img src="http://apicache.gnavi.co.jp/image/rest/b/api_155_20.gif" width="155" height="20" border="0" alt="グルメ情報検索サイト　ぐるなび">
+            </a>
+          </div>          
+          <div class="col-xs-2 hidden-xs"></div>          
+        </div>
+      </form>
+      <div class="row results-margin">
+        <div class="col-xs-12 visible-xs"></div>
+        <div class="col-xs-12 hidden-xs"></div>
+      </div>
+      <div class="row results">
+      </div>
+    </div>
+    <div id="comment-modal" class="modal fade">
+      <div class="modal-dialog commentModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title titleText"></h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-inline">
+              <div class="form-group">
+                <textarea class="form-control textArea" placeholder="お店の感想を教えてください" rows="3" cols="70"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+              <div class="comment-icons">
+                <button class="btn btn-link voiceButton">
+                  <i class="fa fa-microphone-slash" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-link cancelButton" data-dismiss="modal">
+                  <i class="fa fa-times-circle" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-link okButton">
+                  <i class="fa fa-check-circle" aria-hidden="true"></i>
+                </button>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="alertModal" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header"></div>
+          <div class="modal-body">
+            <p class="alertText"></p>
+          </div>
+          <div class="modal-footer"></div>
+        </div>
+      </div>
+    </div>
+    <div id="map-modal" class="modal fade">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="panel-title shopName"></h3>
+            <div class="map-icon">
+              <button class="btn btn-link" data-dismiss="modal">
+                <i class="fa fa-times-circle" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="modal-body">
+            <div id="map-canvas"></div>
+          </div>
+          <div class="modal-footer"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display: none;">
+      <div class="templateHalfstar">
+        <i class="fa fa-star-half" aria-hidden="true"></i>
+      </div>
+      <div class="templateStar">
+        <i class="fa fa-star" aria-hidden="true"></i>
+      </div>
+      <div class="templateQuestion">
+        <i class="fa fa-question" aria-hidden="true"></i>
+      </div>
+      <div class="templateRestaurant">
+        <div class="col-xs-12 col-sm-6 col-md-4 restaurant">          
+          <div class="panel panel-default restaurant-bg restaurantBg">
+            <div class="panel-heading">
+              <h3 class="panel-title shopName"></h3>              
+              <p class="star-icons stars">
+              </p>
+            </div>
+            <div class="panel-body">
+              <p class="shopText"></p>
+            </div>
+            <div class="panel-footer">
+              <div class="detail-icons">
+                <button class="btn btn-link pinButton">
+                  <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-link linkButton">
+                  <i class="fa fa-link" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-link mapButton" data-toggle="modal" data-target="#map-modal">
+                  <i class="fa fa-map-marker" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-link commentButton" data-toggle="modal" data-target="#comment-modal">
+                  <i class="fa fa-commenting" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="text-right">
+                <div class="provided">提供：ぐるなび</div>
+                <span class="budget"></span>
+                <span class="distination"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var Global = {
+        userTag: makeUUID(),
+        canSpeech: true,
+        rec: null,
+        recError: null,
+        coords: null,
+        noRank: null,
+        TEXT_MAX_LENGTH: 100,
+        ENV: "pro"
+      };
+
+      $(function(){
+        window.SpeechRecognition = window.SpeechRecognition
+              || window.webkitSpeechRecognition;
+        
+        var ua = window.navigator.userAgent.toLowerCase();
+        if (ua.indexOf("iphone")>0||ua.indexOf("ipad")>0||ua.indexOf("ipod")>0) {
+          Global.canSpeech = false;
+        }        
+        if (window.SpeechRecognition && Global.canSpeech) {
+          $(".header .voiceButton").on("click", function() {
+            recognizeVoice($(".header"), search);
+          });
+          $(".commentModal .voiceButton").on("click", function() {
+            recognizeVoice($(".commentModal"), function() {
+              var $root = $("#comment-modal").delay("slow").queue(function(next) {
+                closeModal($root, comment);
+                next();
+              });
+            });
+          });
+          $(".voiceButton .fa").removeClass("fa-microphone-slash").addClass("fa-microphone");
+        }
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(data){
+            Global.coords = data.coords;
+          });
+        }
+      });
+      $("form").on("submit", function(){ return false; });
+
+      $(".textArea").each(function(){autosize(this);});
+      $(".header .textArea").on("autosize:resized", function() {
+        $(this).prop("maxlength", Global.TEXT_MAX_LENGTH);
+        var height = $(this).outerHeight();
+        $(".header .voiceButtonArea").height(height).css("line-height", height+"px");
+      });
+      
+      $(".header .textArea").on("keydown", function(event) { typeText(event, search); });
+      $(".commentModal .textArea").on("keydown", function(event) { 
+        typeText(event, function() {
+          var $root = $("#comment-modal").delay("slow").queue(function(next) {
+            closeModal($root, comment);
+            next();
+          });
+        });
+      });
+      $(".commentModal .okButton").on("click", function(event) {
+        var $textArea = $(".commentModal .textArea");
+        var val = formatText($textArea.val());
+        $textArea.val(val);
+        if (val != "") {
+          var $root = $("#comment-modal").delay("slow").queue(function(next) {
+            closeModal($root, comment);
+            next();
+          });
+        }
+      });
+      $('#map-modal').on("shown.bs.modal", openMap).on("hidden.bs.modal", closeMap);
+      
+      function recognizeVoice($root, succeed) {
+        cancelSpeak();
+        
+        Global.recError = true;
+        var $voiceButton=$root.find(".voiceButton");
+        if ($voiceButton.blur().toggleClass("blink").hasClass("blink")) {
+          if (Global.rec) {
+            Global.rec.abort();
+          }
+          var rec = new SpeechRecognition();
+          Global.rec = rec;
+
+          rec.lang = "ja-JP";
+
+          var $textArea = $root.find(".textArea");        
+          rec.onresult = function(event) {
+            Global.recError = false;
+
+            $textArea.val(formatText(event.results.item(0).item(0).transcript));
+            succeed();
+          };
+          rec.onend = function() {
+            $voiceButton.removeClass("blink");          
+            if (Global.recError) {
+              var $icon = $voiceButton.find("i");
+              $icon
+                .removeClass("fa-microphone")
+                .addClass("fa-question")
+                .delay("slow")
+                .fadeOut("slow", function() {
+                  $icon
+                    .removeClass("fa-question")
+                    .addClass("fa-microphone")
+                    .show();
+              });
+            }
+          };
+          rec.start();
+        } else {
+          if (Global.rec) {
+            Global.recError = false;
+            Global.rec.abort();
+          }        
+        }
+      }
+      function speakVoice(message) {
+        cancelSpeak();
+        if (speechSynthesis && Global.canSpeech) {
+          var utterance = new SpeechSynthesisUtterance();
+          utterance.text = message;
+          utterance.lang = "ja-JP";
+          speechSynthesis.speak(utterance);
+        }
+      }
+      function cancelSpeak() {
+        if (speechSynthesis) {
+          speechSynthesis.cancel();
+        }
+      }
+      
+      function typeText(event, callback, $textArea) {
+        if (event.keyCode == 13) {
+          event.preventDefault();
+          
+          if (!$textArea) {
+            $textArea = $(event.currentTarget);
+          }
+
+          var val = formatText($textArea.val());
+          $textArea.val(val);
+          if (val != "") {
+            if (callback) {
+              $textArea.blur();
+              callback();
+            }
+          }
+        }        
+      }
+      function search() {
+        var postData = {
+          query: $(".header .textArea").val()
+        };
+        var budgets = getBudgets(postData.query);
+        if (budgets) {
+          postData.budget_min = budgets.budget_min;
+          postData.budget_max = budgets.budget_max;
+        }
+        
+        $.ajax({
+          type: "post",
+          url: Global.noRank ? "norank" : "search",
+          dataType: "json",
+          data: postData
+        }).done(function(data){
+          try {
+            data.custom = {
+              queryTag: makeUUID()
+            };
+            if (data.response.docs.length > 0) {
+              displayResults(data);
+            } else {
+              var message = "丁度いいお店が見つけられませんでした……";
+              speakVoice(message);
+              showAlertModal(message);
+            }
+            loggingSearch(data);
+          } catch(e) {
+            alertFailure(e);
+          }
+        }).fail(alertFailure);
+      }
+      function getBudgets(query) {
+        var B_MIN = 0;
+        var B_MAX = 100000;
+        var B_RANGE = 500;
+        var budgets = null;
+        query = query.replace(/０-９/g,function(s){
+          return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        });
+        var matches = query.match(/\d+(?=円)|(から|以上)|(まで|以内|未満|以下|足らず)/g);
+        if (matches) {
+          var yens = matches.filter(function(y){ 
+            if (isFinite(y)) {
+              return y > B_MIN && y < B_MAX
+            } else {
+              return false;
+            }
+          });
+          if (yens.length == 1) {
+            var condition;
+            try {
+              condition = matches[matches.indexOf(yens[0])+1];
+            } catch(e) {
+              condition = null;
+            }
+            yens = yens.map(function(y){
+              return Number(y.replace(/^0+/g, ""));
+            });
+            
+            if (condition) {
+              if (/から|以上/g.test(condition)) {
+                budgets = {
+                  budget_min: yens[0],
+                  budget_max: B_MAX
+                };
+              } else {
+                budgets = {
+                  budget_min: B_MIN,
+                  budget_max: yens[0]
+                };
+              }
+            } else {
+              budgets = {
+                budget_min: yens[0] - B_RANGE,
+                budget_max: yens[0] + B_RANGE
+              };
+            }
+          } else if (yens.length >= 2) {
+            budgets = {
+              budget_min: Math.min(yens[0], yens[1]),
+              budget_max: Math.max(yens[0], yens[1])
+            };
+          }
+        }        
+        if (budgets) {
+          budgets.budget_min = Math.max(B_MIN, budgets.budget_min);
+          budgets.budget_max = Math.min(B_MAX, budgets.budget_max);
+
+          return budgets;
+        } else {
+          return null;
+        }
+      }
+      function displayResults(data) {
+        speakRecommendations(data);
+        
+        $(".title-margin").delay("fast").slideUp(function() {
+          $("body").prepend($(".header")).addClass("listMode");
+        });
+
+        var $results = $(".results");
+        $results.find(".restaurant").each(function(index, element){
+          var $element = $(element);
+          if (!$element.hasClass("pinning")) {
+            $element.remove();
+          }
+        });
+        
+        data.response.docs.forEach(function(document){
+          var $restaurant = $(".templateRestaurant :first").clone(true, true);
+          $restaurant.data({
+            data: data,
+            document: document
+          });
+          
+          $restaurant.find(".shopName").text(document.shop_name);
+          $restaurant.find(".restaurantBg").css("background-color", getRandomColor(document.shop_name + document.shop_name_kana + document.pr_text));
+          if (document.image_url != "") {
+            $restaurant.find(".restaurantBg").css("background-image", "url(" + document.image_url + ")");            
+          } else {
+            $restaurant.find(".provided").hide();
+          }
+          
+          $restaurant.find(".shopText").text(document.pr_text);
+          var confidence = document["ranker.confidence"];
+          if (isFinite(confidence)) {
+            var starScore = Math.max(1, Math.floor(confidence * 10));
+            for (var i = 0; i < Math.floor(starScore / 2); i++) {
+              $(".templateStar :first").clone(true, true).appendTo($restaurant.find(".stars"));
+            }
+            for (var i = 0; i < Math.floor(starScore % 2); i++) {
+              $(".templateHalfstar :first").clone(true, true).appendTo($restaurant.find(".stars"));
+            }
+          } else {
+              $(".templateQuestion :first").clone(true, true).appendTo($restaurant.find(".stars"));
+          }
+          var budget = document.budget;
+          if (budget > 0) {
+            $restaurant.find(".budget").text("予算約" + document.budget + "円");
+          }
+          if (Global.coords) {
+            var distance = calcDistance(
+              Global.coords.latitude, 
+              Global.coords.longitude, 
+              document.latitude, 
+              document.longitude).toFixed();
+            if (distance > 750) {
+              distance = (distance / 1000).toFixed(1) + "k";
+            }
+            var distinationText = "ここから約" + distance + "m";
+            $restaurant.find(".distination").text(distinationText);
+          }
+          
+          $restaurant.find(".pinButton").on("click", pinning);
+          $restaurant.find(".linkButton").on("click", openLink);
+          $restaurant.find(".mapButton").on("click", clickMapButton);
+          $restaurant.find(".commentButton").on("click", openCommentModal);
+          
+          $restaurant.appendTo($results).hide().delay("fast").fadeIn("slow");
+        });
+      }
+      function speakRecommendations(data) {
+        speakVoice("おすすめのお店をご紹介致します");
+      }
+      
+      function comment() {
+        var $root = $(".commentModal");
+        var text = $root.find(".textArea").val();
+        $.ajax({
+          type: "post",
+          url: "classify",
+          dataType: "json",
+          data: {
+	       text: text
+          }
+        }).done(function(data){
+          var topClass = data.top_class;
+          var message = topClass == "yummy" ? "喜んで頂けたようで、良かったです！" : "ご満足頂けなかったようで、すみません…";
+          speakVoice(message);
+          showAlertModal(message);
+          
+          loggingComment(
+            $root.data("data"), 
+            $root.data("document").shop_id, 
+            $root.data("document").vote_id, 
+            text, 
+            topClass);
+        }).fail(alertFailure);
+      }
+
+      function pinning() {
+        $(this).blur().closest(".restaurant").toggleClass("pinning");
+      }
+      function openLink() {
+        var $restaurant = $(this).blur().closest(".restaurant");
+        window.open($restaurant.data("document").shop_url, "_blank");
+        loggingShowDetail($restaurant.data("data"), $restaurant.data("document").shop_id, $restaurant.data("document").vote_id, "hp");
+      }
+      function clickMapButton() {
+        var $restaurant = $(this).blur().closest(".restaurant");
+        $("#map-modal").data("data", $restaurant.data("data"));
+        $("#map-modal").data("document", $restaurant.data("document"));
+      }
+      function openMap() {
+        var canvas = window.document.getElementById("map-canvas");
+        var $root = $("#map-modal");
+        var document = $root.data("document");
+        
+        $root.find(".shopName").text(document.shop_name);        
+        
+        var distination = new google.maps.LatLng(document.latitude, document.longitude);
+        var mapOptions = {
+          zoom: 17,
+          center: new google.maps.LatLng(document.latitude, document.longitude)
+        };
+        var map = new google.maps.Map(canvas, mapOptions);
+        google.maps.event.trigger(map, "resize");
+        
+        if (Global.coords) {
+          var request = {
+              origin: new google.maps.LatLng(Global.coords.latitude, Global.coords.longitude),
+              destination: distination,
+              travelMode: google.maps.DirectionsTravelMode.WALKING
+          }
+          var directionsService = new google.maps.DirectionsService();
+          directionsService.route(request, function(result){
+            var directionsDisplay = new google.maps.DirectionsRenderer();
+            directionsDisplay.setDirections(result);
+            directionsDisplay.setMap(map);
+            map.setOptions(mapOptions);
+          });
+        } else {
+          new google.maps.Marker({
+            map: map,
+            position: distination
+          });
+        }
+        loggingShowDetail($root.data("data"), document.shop_id, document.vote_id, "map");
+      }
+      function closeMap() {
+        var $root = $("#map-modal");
+        $root.find(".shopName").text("");
+        $root.find("#map-canvas").empty();
+      }
+      
+      function openCommentModal() {
+        var $root = $(".commentModal");
+        var $restaurant = $(this).blur().closest(".restaurant");
+        var document = $restaurant.data("document");
+        $root.data({
+          data: $restaurant.data("data"),
+          document: document
+        });
+        $root.find(".titleText").text(document.shop_name + "はいかがでしたか？");
+        $root.find(".textArea").val("");
+        
+        speakVoice(document.shop_name_kana + "はいかがでしたか？");
+      }
+      
+      function loggingSearch(data) {
+        logging("search", data.responseHeader.params.q, data.custom.queryTag, "", "", "", "");
+      }
+      function loggingShowDetail(data, shopId, voteId, subType) {
+        logging("show_detail."+subType, data.responseHeader.params.q, data.custom.queryTag, shopId, voteId, "", "");
+      }
+      function loggingComment(data, shopId, voteId, commentText, commentClass) {
+        logging("comment", data.responseHeader.params.q, data.custom.queryTag, shopId, voteId, commentText, commentClass);
+      }
+      function logging(loggingType, queryText, queryTag, shopId, voteId, commentText, commentClass) {
+        $.ajax({
+          type: "post",
+          url: "logging",
+          dataType: "json",
+          data: {
+	       env: Global.ENV,
+	       loggingId: makeUUID(),
+	       loggingType: loggingType,
+	       queryText: queryText,
+	       shopId: shopId,
+           voteId: voteId,
+	       commentText: commentText,
+	       commentClass: commentClass,
+	       userTag: Global.userTag,
+           queryTag: queryTag
+          }
+        });
+      }
+      
+      function alertFailure(error) {
+        var message = "ちょっと調子が悪いので、また後で話しかけてください……";
+        speakVoice(message);
+        showAlertModal(message);
+      }
+      
+      function getRandomColor(text) {
+        var colors = ["red", "chocolate", "purple", "olive", "orange", "brown", "orchid"];
+        return colors[text.length % colors.length];
+      }
+      function formatText(value) {
+        return $.trim(value.replace(/[\n\r\t]/g, "").substr(0, Global.TEXT_MAX_LENGTH));
+      }
+      function showAlertModal(message) {
+        $root = $("#alertModal");
+        $root.find(".alertText").text(message);
+        $root.on("shown.bs.modal", function() {
+        $("body").addClass("modal-alert-color");
+        }).on("hidden.bs.modal", function() {
+          $("body").removeClass("modal-alert-color");
+        }).modal();
+        $root.delay(3000).queue(function(next){
+          closeModal($root);
+          next();
+        });
+      }
+      function closeModal($modal, callback) {
+        if ($modal.hasClass("in")) {
+          $modal.removeClass("modal-open");
+          $(".modal-backdrop").remove();
+        }
+        if (callback) {
+          $modal.modal("hide").queue(function(next){
+            callback();
+            next();
+          });
+        } else {
+          $modal.modal("hide");
+        }
+      }
+      function calcDistance(lat1, lat2, lng1, lng2) {
+        function radians(deg){
+          return deg * Math.PI / 180;
+        }
+        return 6378.14
+          * Math.acos(
+            Math.cos(radians(lat1)) 
+              * Math.cos(radians(lat2))
+              * Math.cos(radians(lng2) - radians(lng1))
+              + Math.sin(radians(lat1)) * Math.sin(radians(lat2))
+            );
+      }
+      function makeUUID() {
+        var uuid = "", i, random;
+        for (i = 0; i < 32; i++) {
+          random = Math.random() * 16 | 0;
+          if (i == 8 || i == 12 || i == 16 || i == 20) {
+            uuid += "-"
+          }
+          uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+        }
+        return uuid;
+      }
+    </script>
+  </body>
+</html>
