@@ -8,8 +8,9 @@ public class ScriptCaller {
     try {
       Common.logging("start", "ScriptCaller");
 
-      // ぐるなびAPIからレストラン情報・応援口コミ情報をDBに登録
+      // ぐるなびAPIからレストラン情報・エリアマスタ・応援口コミ情報をDBに登録
       // InsertRestaurantRecords.main(args);
+      // InsertAreaMasterRecords.main(args);
       // InsertKuchikomiRecords.main(args);
 
       // DBからRetrieve and Rankのドキュメントデータを生成

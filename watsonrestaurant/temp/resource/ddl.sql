@@ -114,6 +114,20 @@ CREATE TABLE `restaurant` (
   PRIMARY KEY (`shop_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `area_master`
+--
+
+DROP TABLE IF EXISTS `area_master`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `area_master` (
+  `area_code` varchar(255) NOT NULL,
+  `area_name` text NOT NULL,
+  PRIMARY KEY (`area_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
